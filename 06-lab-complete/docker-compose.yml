@@ -1,16 +1,17 @@
-version: "3.9"
-
 services:
   agent:
     build: .
-    ports:
-      - "8000:8000"
     environment:
       - ENVIRONMENT=staging
-      - APP_NAME=Production AI Agent
+      - APP_NAME=FinTrack Agent
       - REDIS_URL=redis://redis:6379/0
-    env_file:
-      - .env.local
+      - AGENT_API_KEY=${AGENT_API_KEY:-dev-key-change-me}
+      - RATE_LIMIT_PER_MINUTE=${RATE_LIMIT_PER_MINUTE:-10}
+      - MONTHLY_BUDGET_USD=${MONTHLY_BUDGET_USD:-10}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
+      - FINTRACK_DATA_DIR=/app/runtime-data
+      - FINTRACK_SEED_DIR=/app/data
     depends_on:
       redis:
         condition: service_healthy
@@ -31,3 +32,13 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - agent
+    restart: unless-stopped

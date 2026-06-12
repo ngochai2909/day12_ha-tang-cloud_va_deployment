@@ -29,16 +29,20 @@ class Settings:
 
     # Rate limiting
     rate_limit_per_minute: int = field(
-        default_factory=lambda: int(os.getenv("RATE_LIMIT_PER_MINUTE", "20"))
+        default_factory=lambda: int(os.getenv("RATE_LIMIT_PER_MINUTE", "10"))
     )
 
     # Budget
-    daily_budget_usd: float = field(
-        default_factory=lambda: float(os.getenv("DAILY_BUDGET_USD", "5.0"))
+    monthly_budget_usd: float = field(
+        default_factory=lambda: float(os.getenv("MONTHLY_BUDGET_USD", "10.0"))
     )
 
     # Storage
     redis_url: str = field(default_factory=lambda: os.getenv("REDIS_URL", ""))
+    fintrack_data_dir: str = field(default_factory=lambda: os.getenv("FINTRACK_DATA_DIR", "runtime-data"))
+    fintrack_seed_dir: str = field(default_factory=lambda: os.getenv("FINTRACK_SEED_DIR", "data"))
+    default_currency: str = field(default_factory=lambda: os.getenv("DEFAULT_CURRENCY", "VND"))
+    default_locale: str = field(default_factory=lambda: os.getenv("DEFAULT_LOCALE", "vi-VN"))
 
     def validate(self):
         logger = logging.getLogger(__name__)
@@ -47,6 +51,8 @@ class Settings:
                 raise ValueError("AGENT_API_KEY must be set in production!")
             if self.jwt_secret == "dev-jwt-secret":
                 raise ValueError("JWT_SECRET must be set in production!")
+            if not self.redis_url:
+                raise ValueError("REDIS_URL must be set in production!")
         if not self.openai_api_key:
             logger.warning("OPENAI_API_KEY not set — using mock LLM")
         return self

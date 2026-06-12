@@ -1,6 +1,7 @@
 # Section 2 — Docker: Đóng Gói Agent Thành Container
 
 ## Mục tiêu học
+
 - Hiểu container là gì và tại sao cần nó
 - Viết Dockerfile đúng cách (single vs multi-stage)
 - Dùng Docker Compose để chạy multi-service stack
@@ -19,6 +20,7 @@ develop/
 ```
 
 ### Chạy thử
+
 ```bash
 # IMPORTANT: Build from project root!
 cd ../..  # Go to project root
@@ -64,6 +66,7 @@ production/
 ```
 
 ### Chạy thử
+
 ```bash
 # From project root
 cd ../..  # if not already there
@@ -113,3 +116,4 @@ COPY --from=builder ...        # copy chỉ /site-packages
 1. Tại sao `COPY requirements.txt .` rồi `RUN pip install` TRƯỚC khi `COPY . .`?
 2. `.dockerignore` nên chứa những gì? Tại sao `venv/` và `.env` quan trọng?
 3. Nếu agent cần đọc file từ disk, làm sao mount volume vào container?
+

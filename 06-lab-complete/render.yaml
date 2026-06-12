@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: ai-agent-production
+    name: fintrack-agent-production
     runtime: docker
     region: singapore
     plan: starter
@@ -9,15 +9,27 @@ services:
     envVars:
       - key: ENVIRONMENT
         value: production
+      - key: APP_NAME
+        value: FinTrack Agent
       - key: APP_VERSION
         value: "1.0.0"
       - key: OPENAI_API_KEY
+        sync: false
+      - key: REDIS_URL
         sync: false
       - key: AGENT_API_KEY
         generateValue: true
       - key: JWT_SECRET
         generateValue: true
-      - key: DAILY_BUDGET_USD
-        value: "5.0"
+      - key: MONTHLY_BUDGET_USD
+        value: "10.0"
       - key: RATE_LIMIT_PER_MINUTE
-        value: "20"
+        value: "10"
+      - key: FINTRACK_DATA_DIR
+        value: /app/runtime-data
+      - key: FINTRACK_SEED_DIR
+        value: /app/data
+      - key: DEFAULT_CURRENCY
+        value: VND
+      - key: DEFAULT_LOCALE
+        value: vi-VN

@@ -34,3 +34,4 @@ Thumbs.db
 # ── Docker volumes (local dev) ─────────────────────��──────
 data/
 volumes/
+06-lab-complete/runtime-data/

@@ -77,6 +77,7 @@ def run_checks():
     # ── API Endpoints ────────────────────────────��─
     print("\n🌐 API Endpoints (code check)")
     main_py = os.path.join(base, "app", "main.py")
+    compose_yml = os.path.join(base, "docker-compose.yml")
     if os.path.exists(main_py):
         content = open(main_py).read()
         results.append(check("/health endpoint defined",
@@ -91,8 +92,17 @@ def run_checks():
                              "SIGTERM" in content))
         results.append(check("Structured logging (JSON)",
                              "json.dumps" in content or '"event"' in content))
+        results.append(check("Redis readiness check implemented",
+                             "ping()" in content and "/ready" in content))
     else:
         results.append(check("app/main.py exists", False, "Create app/main.py!"))
+
+    if os.path.exists(compose_yml):
+        compose_content = open(compose_yml).read()
+        results.append(check("docker-compose has redis service",
+                             "redis:" in compose_content))
+        results.append(check("docker-compose has nginx service",
+                             "nginx:" in compose_content))
 
     # ── Docker ─────────────────────────────────────
     print("\n🐳 Docker")

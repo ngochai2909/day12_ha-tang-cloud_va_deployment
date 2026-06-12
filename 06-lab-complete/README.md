@@ -1,100 +1,132 @@
-# Lab 12 — Complete Production Agent
+# Lab 6 - FinTrack Production Agent
 
-Kết hợp TẤT CẢ những gì đã học trong 1 project hoàn chỉnh.
+FinTrack nhan cau noi tu nhien cua nguoi dung va bien thanh giao dich tai chinh an toan:
+
+- AI parser (OpenAI) hieu y dinh
+- backend kiem tra vi/danh muc
+- tao giao dich JSON + cap nhat so du vi
+- frontend co the refetch dashboard de thay doi ngay
 
 ## Checklist Deliverable
 
-- [x] Dockerfile (multi-stage, < 500 MB)
-- [x] docker-compose.yml (agent + redis)
-- [x] .dockerignore
-- [x] Health check endpoint (`GET /health`)
-- [x] Readiness endpoint (`GET /ready`)
-- [x] API Key authentication
+- [x] Dockerfile multi-stage, non-root, healthcheck
+- [x] docker-compose (agent + redis)
+- [x] Health (`GET /health`) + Readiness (`GET /ready`)
+- [x] API Key auth (`X-API-Key`)
 - [x] Rate limiting
-- [x] Cost guard
-- [x] Config từ environment variables
-- [x] Structured logging
-- [x] Graceful shutdown
-- [x] Public URL ready (Railway / Render config)
+- [x] Cost guard ($10/month per user)
+- [x] Config tu environment variables
+- [x] Structured logging JSON
+- [x] Graceful shutdown (`SIGTERM`)
+- [x] Render deploy config
+- [x] Stateless design (state trong Redis)
+- [x] Nginx load balancer
 
----
-
-## Cấu Trúc
+## Cau truc project
 
 ```
 06-lab-complete/
 ├── app/
-│   ├── main.py         # Entry point — kết hợp tất cả
-│   ├── config.py       # 12-factor config
-│   ├── auth.py         # API Key + JWT
-│   ├── rate_limiter.py # Rate limiting
-│   └── cost_guard.py   # Budget protection
-├── Dockerfile          # Multi-stage, production-ready
-├── docker-compose.yml  # Full stack
-├── railway.toml        # Deploy Railway
-├── render.yaml         # Deploy Render
-├── .env.example        # Template
-├── .dockerignore
-└── requirements.txt
+│   ├── main.py              # FinTrack API + production guards
+│   ├── config.py            # 12-factor settings
+│   ├── fintrack_models.py   # Pydantic models
+│   ├── fintrack_parser.py   # OpenAI parser + fallback parser
+│   └── fintrack_store.py    # JSON persistence + wallet updates
+├── data/
+│   ├── wallets.json         # Seed wallets
+│   └── transactions.json    # Seed transactions
+├── runtime-data/            # Runtime DB (ignored by git)
+├── Dockerfile
+├── docker-compose.yml
+├── render.yaml
+├── .env.example
+└── check_production_ready.py
 ```
 
----
+## Endpoints
 
-## Chạy Local
+- `POST /ask` - parse text + create transaction + return wallet/dashboard snapshot
+- `GET /transactions` - list lich su giao dich
+- `GET /wallets` - list so du vi
+- `GET /dashboard` - tong hop thu/chi/net/by_category/by_wallet
+- `GET /health` - liveness
+- `GET /ready` - readiness
+- `GET /metrics` - basic metrics (protected)
+
+## Chay local (Docker Compose)
 
 ```bash
-# 1. Setup
-cp .env.example .env
-
-# 2. Chạy với Docker Compose
-docker compose up
-
-# 3. Test
-curl http://localhost/health
-
-# 4. Lấy API key từ .env, test endpoint
-API_KEY=$(grep AGENT_API_KEY .env | cut -d= -f2)
-curl -H "X-API-Key: $API_KEY" \
-     -X POST http://localhost/ask \
-     -H "Content-Type: application/json" \
-     -d '{"question": "What is deployment?"}'
+cd 06-lab-complete
+docker compose up --build --scale agent=3
 ```
 
----
-
-## Deploy Railway (< 5 phút)
+Dat env de bat OpenAI that:
 
 ```bash
-# Cài Railway CLI
-npm i -g @railway/cli
-
-# Login và deploy
-railway login
-railway init
-railway variables set OPENAI_API_KEY=sk-...
-railway variables set AGENT_API_KEY=your-secret-key
-railway up
-
-# Nhận public URL!
-railway domain
+export OPENAI_API_KEY="sk-..."
+export LLM_MODEL="gpt-4o-mini"
 ```
 
----
+Lay API key va test:
+
+```bash
+API_KEY=dev-key-change-me
+
+curl -H "X-API-Key: $API_KEY" http://localhost:8080/health
+
+curl -X POST http://localhost:8080/ask \
+  -H "X-API-Key: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"demo-user","question":"do xang 19k tu vi hang ngay"}'
+
+curl -X POST http://localhost:8080/ask \
+  -H "X-API-Key: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"demo-user","question":"nhan luong 15 trieu"}'
+```
+
+Voi Nginx LB, test qua port 8080:
+
+```bash
+curl -H "X-API-Key: $API_KEY" http://localhost:8080/health
+curl -H "X-API-Key: $API_KEY" "http://localhost:8080/dashboard?user_id=demo-user"
+```
+
+## Luong frontend invalidate cache
+
+Sau khi goi `POST /ask` thanh cong:
+
+1. Invalidate cache `transactions`
+2. Invalidate cache `wallets`
+3. Invalidate cache `dashboard`
+4. Refetch `GET /transactions`, `GET /wallets`, `GET /dashboard`
 
 ## Deploy Render
 
-1. Push repo lên GitHub
-2. Render Dashboard → New → Blueprint
-3. Connect repo → Render đọc `render.yaml`
-4. Set secrets: `OPENAI_API_KEY`, `AGENT_API_KEY`
-5. Deploy → Nhận URL!
-
----
-
-## Kiểm Tra Production Readiness
+1. Push repo len GitHub
+2. Render Dashboard -> New -> Blueprint
+3. Chon `06-lab-complete/render.yaml`
+4. Set secrets bat buoc: `AGENT_API_KEY`, `OPENAI_API_KEY`
+5. Deploy, sau do test:
 
 ```bash
+curl https://your-service.onrender.com/health
+curl -X POST https://your-service.onrender.com/ask \
+  -H "X-API-Key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"demo-user","question":"do xang 25k tu vi hang ngay"}'
+```
+
+## Kiem tra production readiness
+
+```bash
+cd 06-lab-complete
 python check_production_ready.py
 ```
 
-Script này kiểm tra tất cả items trong checklist và báo cáo những gì còn thiếu.
+## Luu y ve du lieu runtime va GitHub
+
+- `data/*.json` la seed data mau de demo.
+- Du lieu phat sinh khi user su dung app duoc ghi vao `runtime-data/`.
+- `runtime-data/` da duoc ignore trong `.gitignore`, nen ban se khong vo tinh push du lieu user len GitHub.
+- Runtime state chinh duoc luu trong Redis de dat yeu cau stateless khi scale nhieu agent instances.
