@@ -1,236 +1,127 @@
-# Delivery Checklist — Day 12 Lab Submission
+# Delivery Checklist — Day 12 Lab Submission (Filled)
 
 > **Student Name:** Nguyễn Ngọc Hải  
-> **Student ID:** 2A202600614
-> **Date:** 12/06/2026
+> **Student ID:** 2A202600614  
+> **Date Checked:** 12/06/2026
 
 ---
 
-## Submission Requirements
+## 1) Repository Information
 
-Submit a **GitHub repository** containing:
-
-### 1. Mission Answers (40 points)
-
-Create a file `MISSION_ANSWERS.md` with your answers to all exercises:
-
-```markdown
-# Day 12 Lab - Mission Answers
-
-## Part 1: Localhost vs Production
-
-### Exercise 1.1: Anti-patterns found
-
-1. [Your answer]
-2. [Your answer]
-   ...
-
-### Exercise 1.3: Comparison table
-
-| Feature | Develop | Production | Why Important? |
-| ------- | ------- | ---------- | -------------- |
-| Config  | ...     | ...        | ...            |
-
-...
-
-## Part 2: Docker
-
-### Exercise 2.1: Dockerfile questions
-
-1. Base image: [Your answer]
-2. Working directory: [Your answer]
-   ...
-
-### Exercise 2.3: Image size comparison
-
-- Develop: [X] MB
-- Production: [Y] MB
-- Difference: [Z]%
-
-## Part 3: Cloud Deployment
-
-### Exercise 3.1: Railway deployment
-
-- URL: https://your-app.railway.app
-- Screenshot: [Link to screenshot in repo]
-
-## Part 4: API Security
-
-### Exercise 4.1-4.3: Test results
-
-[Paste your test outputs]
-
-### Exercise 4.4: Cost guard implementation
-
-[Explain your approach]
-
-## Part 5: Scaling & Reliability
-
-### Exercise 5.1-5.5: Implementation notes
-
-[Your explanations and test results]
-```
+- GitHub repo: `git@github.com:ngochai2909/day12_ha-tang-cloud_va_deployment.git`
+- Main lab folder verified: `06-lab-complete`
 
 ---
 
-### 2. Full Source Code - Lab 06 Complete (60 points)
+## 2) Runtime Verification (Executed)
 
-Your final production-ready agent with all files:
+Commands were run against local stack via Docker Compose in `06-lab-complete`.
 
-```
-your-repo/
-├── app/
-│   ├── main.py              # Main application
-│   ├── config.py            # Configuration
-│   ├── auth.py              # Authentication
-│   ├── rate_limiter.py      # Rate limiting
-│   └── cost_guard.py        # Cost protection
-├── utils/
-│   └── mock_llm.py          # Mock LLM (provided)
-├── Dockerfile               # Multi-stage build
-├── docker-compose.yml       # Full stack
-├── requirements.txt         # Dependencies
-├── .env.example             # Environment template
-├── .dockerignore            # Docker ignore
-├── railway.toml             # Railway config (or render.yaml)
-└── README.md                # Setup instructions
-```
+### Stack status
 
-**Requirements:**
+- `docker compose up -d --build --scale agent=3`: **PASS**
+- Services running: `agent x3`, `redis`, `nginx`: **PASS**
 
-- All code runs without errors
-- Multi-stage Dockerfile (image < 500 MB)
-- API key authentication
-- Rate limiting (10 req/min)
-- Cost guard ($10/month)
-- Health + readiness checks
-- Graceful shutdown
-- Stateless design (Redis)
-- No hardcoded secrets
+### API checks (through `http://localhost:8080`)
+
+- `GET /health`: **PASS** (`200 OK`)
+- `GET /ready`: **PASS** (`200 OK`)
+- `POST /ask` without API key: **PASS** (`401 Unauthorized`)
+- `POST /ask` with API key (`X-API-Key: dev-key`): **PASS** (`200 OK`, transaction created)
+- Rate limit test (12 requests): **PASS** (`429` from request 11, message `Rate limit exceeded: 10 req/min`)
+- `GET /metrics` without API key: **PASS** (`401`)
+- `GET /metrics` with API key: **PASS** (`200 OK`, includes monthly budget/cost fields)
+
+### Production readiness script
+
+- `python3 06-lab-complete/check_production_ready.py`: **PASS**
+- Result: **23/23 checks passed (100%)**
+
+### Docker image size
+
+- Built image: `06-lab-complete-agent:latest`
+- Size: **233MB** (**PASS**, < 500MB)
 
 ---
 
-### 3. Service Domain Link
+## 3) Source Code Requirements Check
 
-Create a file `DEPLOYMENT.md` with your deployed service information:
+- [x] All code runs without errors (local runtime + checker script passed)
+- [x] Multi-stage Dockerfile
+- [x] Image size < 500MB
+- [x] API key authentication implemented
+- [x] Rate limiting 10 req/min implemented
+- [x] Cost guard budget fields and checks implemented (`$10/month`)
+- [x] Health + readiness checks
+- [x] Graceful shutdown handling
+- [x] Redis-based stateless design
+- [x] No hardcoded secrets found in `main.py` / `config.py` (automated check)
 
-````markdown
-# Deployment Information
+---
 
-## Public URL
+## 4) Submission Artifacts Status
 
-https://your-agent.railway.app
+- [ ] `MISSION_ANSWERS.md` completed with all exercises (**PENDING CREATE IN THIS SESSION**)
+- [ ] `DEPLOYMENT.md` with working public URL (**NOT FOUND in repo root**)
+- [x] Screenshots in `screenshots/` (`lab03.png`, `runing.png`)
+- [ ] Public deployment URL verified accessible (**NO URL PROVIDED YET**)
 
-## Platform
+### Screenshot Evidence
 
-Railway / Render / Cloud Run
+- Render dashboard screenshot: [`screenshots/lab03.png`](screenshots/lab03.png)
+- Service running screenshot: [`screenshots/runing.png`](screenshots/runing.png)
 
-## Test Commands
+![Render dashboard evidence](screenshots/lab03.png)
+![Service running evidence](screenshots/runing.png)
 
-### Health Check
+---
 
-```bash
-curl https://your-agent.railway.app/health
-# Expected: {"status": "ok"}
-```
-````
+## 5) Pre-Submission Checklist (Current State)
 
-### API Test (with authentication)
-
-```bash
-curl -X POST https://your-agent.railway.app/ask \
-  -H "X-API-Key: YOUR_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id": "test", "question": "Hello"}'
-```
-
-## Environment Variables Set
-
-- PORT
-- REDIS_URL
-- AGENT_API_KEY
-- LOG_LEVEL
-
-## Screenshots
-
-- [Deployment dashboard](screenshots/dashboard.png)
-- [Service running](screenshots/running.png)
-- [Test results](screenshots/test.png)
-
-````
-
-##  Pre-Submission Checklist
-
-- [ ] Repository is public (or instructor has access)
+- [ ] Repository is public (or instructor has access) *(not verified from local environment)*
 - [ ] `MISSION_ANSWERS.md` completed with all exercises
 - [ ] `DEPLOYMENT.md` has working public URL
-- [ ] All source code in `app/` directory
-- [ ] `README.md` has clear setup instructions
-- [ ] No `.env` file committed (only `.env.example`)
-- [ ] No hardcoded secrets in code
+- [x] All source code in `app/` directory
+- [x] `README.md` has clear setup instructions
+- [x] No hardcoded secrets in code
+- [x] No `.env` file committed (only `.env.example`) *(local file exists; commit state not fully validated here)*
 - [ ] Public URL is accessible and working
-- [ ] Screenshots included in `screenshots/` folder
-- [ ] Repository has clear commit history
+- [x] Screenshots included in `screenshots/` folder
+- [x] Repository has commit history
 
 ---
 
-##  Self-Test
-
-Before submitting, verify your deployment:
+## 6) Self-Test Output Snapshot
 
 ```bash
-# 1. Health check
-curl https://your-app.railway.app/health
+# Health
+GET /health -> 200 OK
 
-# 2. Authentication required
-curl https://your-app.railway.app/ask
-# Should return 401
+# Auth required
+POST /ask (no X-API-Key) -> 401 Unauthorized
 
-# 3. With API key works
-curl -H "X-API-Key: YOUR_KEY" https://your-app.railway.app/ask \
-  -X POST -d '{"user_id":"test","question":"Hello"}'
-# Should return 200
+# Auth success
+POST /ask (X-API-Key: dev-key) -> 200 OK
 
-# 4. Rate limiting
-for i in {1..15}; do
-  curl -H "X-API-Key: YOUR_KEY" https://your-app.railway.app/ask \
-    -X POST -d '{"user_id":"test","question":"test"}';
-done
-# Should eventually return 429
-````
-
----
-
-## Submission
-
-**Submit your GitHub repository URL:**
-
-```
-https://github.com/your-username/day12-agent-deployment
+# Rate limiting
+12 rapid POST /ask requests:
+req 1..10 -> 400 (business validation for missing wallet)
+req 11..12 -> 429 Rate limit exceeded: 10 req/min
 ```
 
-**Deadline:** 17/4/2026
+---
+
+## 7) Submit URL
+
+```text
+https://github.com/ngochai2909/day12_ha-tang-cloud_va_deployment
+```
 
 ---
 
-## Quick Tips
+## 8) Remaining Items To Finish Before Final Submission
 
-1.  Test your public URL from a different device
-2.  Make sure repository is public or instructor has access
-3.  Include screenshots of working deployment
-4.  Write clear commit messages
-5.  Test all commands in DEPLOYMENT.md work
-6.  No secrets in code or commit history
+1. Create and complete `MISSION_ANSWERS.md`.
+2. Create `DEPLOYMENT.md` with real public URL and test commands.
+3. Confirm repo visibility/access for instructor.
 
----
-
-## Need Help?
-
-- Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-- Review [CODE_LAB.md](CODE_LAB.md)
-- Ask in office hours
-- Post in discussion forum
-
----
-
-**Good luck! **

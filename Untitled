@@ -1,4 +1,0 @@
-curl http://localhost:8000/ask -X POST \
-  -H "X-API-Key: secret-key-123" \
-  -H "Content-Type: application/json" \
-  -d '{"question": "Hello"}'
